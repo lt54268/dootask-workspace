@@ -1,0 +1,12 @@
+CREATE TABLE workspace_permission (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    is_create BOOLEAN NOT NULL,
+    workspace_id VARCHAR(255),
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user
+        FOREIGN KEY (user_id) 
+        REFERENCES pre_user(userid)
+        ON DELETE CASCADE
+);
