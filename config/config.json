@@ -1,6 +1,6 @@
 {
     "host": "localhost",
-    "port": 49514,
+    "port": 50262,
     "user": "dootask",
     "password": "123456",
     "database": "dootask"

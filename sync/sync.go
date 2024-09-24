@@ -46,6 +46,20 @@ func (s *SyncService) SyncUsers() error {
 			}
 			log.Printf("Inserted user_id: %d into workspace_permission\n", userID)
 		}
+
+		// workspace_permission 表同步 user_id 到 history_aichat 表
+		// err = s.db.QueryRow("SELECT EXISTS(SELECT 1 FROM history_aichat WHERE user_id = ?)", userID).Scan(&exists)
+		// if err != nil {
+		// 	return err
+		// }
+
+		// if !exists {
+		// 	_, err := s.db.Exec("INSERT INTO history_aichat (session_id, model, user_id, last_messages, create_time, update_time) VALUES (?, ?, ?, ?, NOW(), NOW())", 0, 0, userID, "")
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	log.Printf("Inserted user_id: %d into history_aichat\n", userID)
+		// }
 	}
 
 	if err := rows.Err(); err != nil {
