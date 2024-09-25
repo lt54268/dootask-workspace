@@ -30,7 +30,6 @@ func GetCreatedWorkspacesUsers(conn *websocket.Conn) {
 		return
 	}
 
-	// 将 user_id 列表转换为 JSON 格式
 	var userResponses []UserResponse
 	for _, userID := range createdUsers {
 		userResponses = append(userResponses, UserResponse{UserID: userID})

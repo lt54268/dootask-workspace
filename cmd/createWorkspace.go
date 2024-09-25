@@ -10,7 +10,23 @@ import (
 
 // 创建工作区并返回 slug
 func CreateWorkspace(userID int64) (string, error) {
-	// 创建 HTTP 请求
+	dbConn, err := db.ConnectDB()
+	if err != nil {
+		return "", fmt.Errorf("数据库连接失败: %w", err)
+	}
+	defer dbConn.Close()
+
+	var workspaceID *string
+	query := "SELECT workspace_id FROM workspace_permission WHERE user_id = ?"
+	err = dbConn.QueryRow(query, userID).Scan(&workspaceID)
+	if err != nil {
+		return "", fmt.Errorf("数据库查询失败: %w", err)
+	}
+
+	if workspaceID != nil {
+		return "", fmt.Errorf("用户 %d 已经创建过工作区，无法重复创建", userID)
+	}
+
 	url := "http://103.63.139.165:3001/api/v1/workspace/new"
 	body := map[string]string{"name": fmt.Sprintf("Workspace for User %d", userID)}
 	jsonBody, err := json.Marshal(body)
@@ -57,8 +73,6 @@ func UpdateWorkspaceID(userID int64, slug string) error {
 	}
 	defer db.Close()
 
-	// 这里是更新数据库的逻辑，假设你有对应的数据库操作
-	// 示例：使用 SQL 语句更新 workspace_permission 表
 	query := "UPDATE workspace_permission SET workspace_id = ? WHERE user_id = ?"
 	_, err = db.Exec(query, slug, userID)
 	if err != nil {

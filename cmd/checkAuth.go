@@ -7,7 +7,7 @@ import (
 
 // 检查用户是否有创建工作区的权限
 func CheckUserAuthorization(userID int64) (bool, error) {
-	dbConn, err := db.ConnectDB() // 假设 db.ConnectDB() 返回数据库连接
+	dbConn, err := db.ConnectDB()
 	if err != nil {
 		return false, err
 	}
@@ -18,7 +18,6 @@ func CheckUserAuthorization(userID int64) (bool, error) {
 	err = dbConn.QueryRow(query, userID).Scan(&isCreate)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// 如果用户不在表中，返回 false
 			return false, nil
 		}
 		return false, err

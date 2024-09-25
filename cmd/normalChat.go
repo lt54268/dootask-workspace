@@ -11,17 +11,17 @@ import (
 	"doows/db"
 )
 
-const streamChatAPI = "http://103.63.139.165:3001/api/v1/workspace/%s/stream-chat"
+const NormalChatAPI = "http://103.63.139.165:3001/api/v1/workspace/%s/chat"
 
-type RequestPayload struct {
+type RequestPayloadNormal struct {
 	Message   string `json:"message"`
 	Mode      string `json:"mode"`
 	SessionID string `json:"sessionId"`
 }
 
-// 处理流式聊天请求
-func StreamChat(slug, message, mode, sessionID string) (string, error) {
-	payload := RequestPayload{
+// 处理常规聊天请求
+func NormalChat(slug, message, mode, sessionID string) (string, error) {
+	payload := RequestPayloadNormal{
 		Message:   message,
 		Mode:      mode,
 		SessionID: sessionID,
@@ -31,7 +31,7 @@ func StreamChat(slug, message, mode, sessionID string) (string, error) {
 		return "", fmt.Errorf("failed to marshal payload: %v", err)
 	}
 
-	url := fmt.Sprintf(streamChatAPI, slug)
+	url := fmt.Sprintf(NormalChatAPI, slug)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
@@ -40,7 +40,7 @@ func StreamChat(slug, message, mode, sessionID string) (string, error) {
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer VREQHX8-PTGMW06-P9T61XE-BWG31ZW") // 替换为实际的 API Key
-	req.Header.Set("accept", "text/event-stream")
+	req.Header.Set("accept", "application/json")
 
 	client := &http.Client{
 		Timeout: time.Second * 10,
@@ -61,7 +61,7 @@ func StreamChat(slug, message, mode, sessionID string) (string, error) {
 }
 
 // 从 workspace_permission 表中获取 slug
-func GetWorkspaceSlug(workspaceID string) (string, error) {
+func GetWorkspaceSlugnomal(workspaceID string) (string, error) {
 	dbConn, err := db.ConnectDB()
 	if err != nil {
 		return "", fmt.Errorf("数据库连接失败: %w", err)

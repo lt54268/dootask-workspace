@@ -14,9 +14,8 @@ type WebSocketRequest struct {
 }
 
 type SetPermissionRequest struct {
-	UserID      int64  `json:"user_id"`
-	IsCreate    bool   `json:"is_create"`
-	WorkspaceID string `json:"workspace_id"`
+	UserID   int64 `json:"user_id"`
+	IsCreate bool  `json:"is_create"`
 }
 
 type CreateWorkspaceRequest struct {
@@ -30,14 +29,13 @@ type StreamChatRequest struct {
 	SessionID string `json:"sessionId"`
 }
 
-// // BackRequest 定义前端发送回来的请求结构
-// type BackRequest struct {
-// 	SessionID   int64  `json:"session_id"`
-// 	Slug        string `json:"slug"` // 存放 user_id
-// 	LastMessage string `json:"last_message"`
-// }
+type NormalChatRequest struct {
+	Slug      string `json:"slug"`
+	Message   string `json:"message"`
+	Mode      string `json:"mode"`
+	SessionID string `json:"sessionId"`
+}
 
-// 处理 WebSocket 消息
 func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 	var request WebSocketRequest
 	if err := json.Unmarshal(msg, &request); err != nil {
@@ -72,11 +70,11 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 			sendError(conn, "权限设置请求格式错误")
 			return
 		}
-		if err := cmd.CheckWorkspaceLimit(conn); err != nil {
-			sendError(conn, "工作区创建数量已达最大")
-			return
-		}
-		cmd.SetWorkspacePermission(conn, req.UserID, req.IsCreate, req.WorkspaceID)
+		// if err := cmd.CheckWorkspaceLimit(conn); err != nil {
+		// 	sendError(conn, "工作区创建数量已达最大!")
+		// 	return
+		// }
+		cmd.SetWorkspacePermission(conn, req.UserID, req.IsCreate)
 
 	case "create":
 		log.Println("收到创建工作区请求...")
@@ -86,7 +84,6 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 			return
 		}
 
-		// 检查用户是否有权限创建工作区
 		isAuthorized, err := cmd.CheckUserAuthorization(req.UserID)
 		if err != nil {
 			sendError(conn, "检查用户权限时出错")
@@ -94,24 +91,22 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 		}
 
 		if !isAuthorized {
-			sendError(conn, "用户没有创建工作区的权限")
+			sendError(conn, "用户没有创建工作区的权限!")
 			return
 		}
 
-		// 创建工作区
 		slug, err := cmd.CreateWorkspace(req.UserID)
 		if err != nil {
 			sendError(conn, "创建工作区失败: "+err.Error())
 			return
 		}
 
-		// 更新数据库
 		if err := cmd.UpdateWorkspaceID(req.UserID, slug); err != nil {
 			sendError(conn, "更新工作区权限失败: "+err.Error())
 			return
 		}
 
-		sendMessage(conn, "工作区创建成功，slug: "+slug)
+		sendMessage(conn, "工作区创建成功! slug: "+slug)
 
 	case "stream-chat":
 		log.Println("收到流式聊天请求...")
@@ -121,13 +116,6 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 			return
 		}
 
-		// // 将 sessionId 、slug、message 存入 history_aichat 表
-		// if err := cmd.SaveChatSession(req.SessionID, req.Slug, req.Message); err != nil {
-		// 	sendError(conn, "保存聊天会话失败: "+err.Error())
-		// 	return
-		// }
-
-		// 处理 stream-chat 请求
 		response, err := cmd.StreamChat(req.Slug, req.Message, req.Mode, req.SessionID)
 		if err != nil {
 			sendError(conn, "流式聊天处理失败: "+err.Error())
@@ -135,6 +123,22 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 		}
 
 		sendMessage(conn, response)
+
+	case "chat":
+		log.Println("收到常规聊天请求...")
+		var req NormalChatRequest
+		if err := json.Unmarshal(request.Data, &req); err != nil {
+			sendError(conn, "常规聊天请求格式错误")
+			return
+		}
+
+		res, err := cmd.NormalChat(req.Slug, req.Message, req.Mode, req.SessionID)
+		if err != nil {
+			sendError(conn, "常规聊天处理失败: "+err.Error())
+			return
+		}
+
+		sendMessage(conn, res)
 
 	case "back":
 		log.Println("收到返回消息请求...")
@@ -144,13 +148,12 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 			return
 		}
 
-		// 插入聊天消息
 		if err := cmd.InsertChatMessage(req); err != nil {
 			sendError(conn, "插入聊天消息失败: "+err.Error())
 			return
 		}
 
-		sendMessage(conn, "消息已成功插入！")
+		sendMessage(conn, "消息已成功记录!")
 
 	case "send":
 		log.Println("收到发送消息请求...")
@@ -160,8 +163,7 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 			return
 		}
 
-		// 获取最新的聊天消息
-		lastMessage, err := cmd.GetLastMessages(sessionID)
+		lastMessage, err := cmd.SendChatMessages(sessionID)
 		if err != nil {
 			sendError(conn, "获取聊天消息失败: "+err.Error())
 			return

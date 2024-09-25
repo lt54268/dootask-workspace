@@ -25,7 +25,7 @@ func SyncUsers(done chan struct{}) {
 	for {
 		select {
 		case <-ticker.C:
-			log.Println("开始同步用户...")
+			//log.Println("开始同步用户...")
 			if err := userService.SyncUsers(); err != nil {
 				log.Println("同步用户失败:", err)
 			} else {

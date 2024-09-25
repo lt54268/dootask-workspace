@@ -40,7 +40,7 @@ func (s *SyncService) SyncUsers() error {
 		}
 
 		if !exists {
-			_, err := s.db.Exec("INSERT INTO workspace_permission (user_id, is_create, workspace_id, create_time, update_time) VALUES (?, ?, ?, NOW(), NOW())", userID, false, 0)
+			_, err := s.db.Exec("INSERT INTO workspace_permission (user_id, is_create, create_time, update_time) VALUES (?, ?, NOW(), NOW())", userID, false)
 			if err != nil {
 				return err
 			}
@@ -79,7 +79,7 @@ func (s *SyncService) SyncUsers() error {
 		return err
 	}
 
-	log.Println("pre_users 表用户已同步至 workspace_permission 表!")
+	//log.Println("pre_users 表用户已同步至 workspace_permission 表!")
 	return nil
 }
 
@@ -102,7 +102,7 @@ func (s *SyncService) CheckWorkspaceCreationLimit() error {
 	}
 
 	// 检查数量是否超过 3
-	if count > 3 {
+	if count >= 3 {
 		log.Printf("Warning: 超过工作区创建的数量，当前数量: %d", count)
 		return errors.New("工作区创建数量已达最大!")
 	}
@@ -137,7 +137,7 @@ func (s *SyncService) GetCreatedWorkspaces() ([]int64, error) {
 }
 
 // 检查并设置 workspace_permission 表中的 is_create 状态和 workspace_id
-func (s *SyncService) SetWorkspacePermission(userID int64, isCreate bool, workspaceID string) error {
+func (s *SyncService) SetWorkspacePermission(userID int64, isCreate bool) error {
 	var exists bool
 	query := `SELECT EXISTS(SELECT 1 FROM pre_users WHERE userid = ?)`
 	err := s.db.QueryRow(query, userID).Scan(&exists)
@@ -149,35 +149,30 @@ func (s *SyncService) SetWorkspacePermission(userID int64, isCreate bool, worksp
 		return fmt.Errorf("该用户不存在: %d", userID)
 	}
 
-	// 如果 user_id 存在并且 is_create 为 true，才允许插入 workspace_id
-	if isCreate {
-		query = `SELECT EXISTS(SELECT 1 FROM workspace_permission WHERE user_id = ?)`
-		err := s.db.QueryRow(query, userID).Scan(&exists)
+	query = `SELECT EXISTS(SELECT 1 FROM workspace_permission WHERE user_id = ?)`
+	err = s.db.QueryRow(query, userID).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("数据库查询失败: %v", err)
+	}
+
+	now := time.Now()
+
+	if exists {
+		// 如果存在，则更新 is_create 和 update_time
+		updateQuery := `UPDATE workspace_permission SET is_create = ?, update_time = ? WHERE user_id = ?`
+		_, err = s.db.Exec(updateQuery, isCreate, now, userID)
 		if err != nil {
-			return fmt.Errorf("数据库查询失败: %v", err)
+			return fmt.Errorf("更新工作区权限失败: %v", err)
 		}
-
-		now := time.Now()
-
-		if exists {
-			// 如果存在，则更新 is_create 和 update_time
-			updateQuery := `UPDATE workspace_permission SET is_create = ?, workspace_id = ?, update_time = ? WHERE user_id = ?`
-			_, err = s.db.Exec(updateQuery, isCreate, workspaceID, now, userID)
-			if err != nil {
-				return fmt.Errorf("更新工作区权限失败: %v", err)
-			}
-			log.Printf("用户 %d 的工作区权限更新成功!", userID)
-		} else {
-			// 如果不存在，则插入一条新记录
-			insertQuery := `INSERT INTO workspace_permission (user_id, is_create, workspace_id, create_time, update_time) VALUES (?, ?, ?, ?, ?)`
-			_, err = s.db.Exec(insertQuery, userID, isCreate, workspaceID, now, now)
-			if err != nil {
-				return fmt.Errorf("插入工作区权限失败: %v", err)
-			}
-			log.Printf("用户 %d 的工作区权限插入成功!", userID)
-		}
+		log.Printf("用户 %d 的工作区权限更新成功!", userID)
 	} else {
-		return fmt.Errorf("用户 %d 的 is_create 为 false,无法设置 workspace_id", userID)
+		// 如果不存在，则插入一条新记录
+		insertQuery := `INSERT INTO workspace_permission (user_id, is_create, create_time, update_time) VALUES (?, ?, ?, ?)`
+		_, err = s.db.Exec(insertQuery, userID, isCreate, now, now)
+		if err != nil {
+			return fmt.Errorf("插入工作区权限失败: %v", err)
+		}
+		log.Printf("用户 %d 的工作区权限插入成功!", userID)
 	}
 
 	return nil
