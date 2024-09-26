@@ -16,11 +16,11 @@ const NormalChatAPI = "http://103.63.139.165:3001/api/v1/workspace/%s/chat"
 type RequestPayloadNormal struct {
 	Message   string `json:"message"`
 	Mode      string `json:"mode"`
-	SessionID string `json:"sessionId"`
+	SessionID int64  `json:"sessionId"`
 }
 
 // 处理常规聊天请求
-func NormalChat(slug, message, mode, sessionID string) (string, error) {
+func NormalChat(slug, message string, mode string, sessionID int64) (string, error) {
 	payload := RequestPayloadNormal{
 		Message:   message,
 		Mode:      mode,

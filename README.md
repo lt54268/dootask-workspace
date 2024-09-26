@@ -7,7 +7,7 @@
   "action": "sync"
 }
  ```
-### 二、设置创建工作区授权
+### 二、设置创建工作区权限
  ```
 {
   "action": "set",
@@ -35,48 +35,59 @@
 ### 五、获取已创建工作区的用户ID
  ```
 {
-  "action": "get"
+  "action": "get-users"
 }
  ```
-### 六、流式对话问答
+### 六、获取workspace_permission表中某个用户的所有字段
+ ```
+{
+  "action": "get-workspace",
+  "data": {
+      "user_id": 1
+  }
+}
+ ```
+### 七、流式对话问答
  ```
 {
   "action": "stream-chat",
   "data": {
     "message": "哈哈哈",
     "mode": "chat",
-    "sessionId": "1",               // 对话ID，每个对话窗口唯一
+    "sessionId": 1,                // 对话ID，每个对话窗口唯一
     "slug": "workspace-for-user-1"
   }
 }
  ```
-### 七、常规对话问答
+### 八、常规对话问答
  ```
 {
   "action": "chat",
   "data": {
-    "message": "哈哈哈",
+    "message": "不哈哈",
     "mode": "chat",
-    "sessionId": "1", 
+    "sessionId": 2, 
     "slug": "workspace-for-user-1"
   }
 }
  ```
-### 八、存储聊天对话
+### 九、存储最后一条聊天对话
  ```
 {
-  "action": "back",
+  "action": "insert-message",
   "data": {
     "session_id": 1,
-    "slug": "workspace-for-user-3",
-    "last_message": "嘻嘻嘻"         // AI回答的最后一条消息
+    "user_id": 3,                    // 用户ID
+    "last_message": "嘻嘻嘻"         // 最后一条消息
   }
 }
 ```
-### 九、获取最后一天聊天记录
+### 十、获取history_aichat表中某个用户的所有字段
 ```
 {
-  "action": "send",
-  "data": 1         // 对话ID
+  "action": "get-history",
+  "data": {
+    "user_id": 1             // 用户ID
+  }
 }
 ```

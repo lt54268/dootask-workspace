@@ -26,14 +26,14 @@ type StreamChatRequest struct {
 	Slug      string `json:"slug"`
 	Message   string `json:"message"`
 	Mode      string `json:"mode"`
-	SessionID string `json:"sessionId"`
+	SessionID int64  `json:"sessionId"`
 }
 
 type NormalChatRequest struct {
 	Slug      string `json:"slug"`
 	Message   string `json:"message"`
 	Mode      string `json:"mode"`
-	SessionID string `json:"sessionId"`
+	SessionID int64  `json:"sessionId"`
 }
 
 func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
@@ -46,24 +46,46 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 
 	switch request.Action {
 	case "sync":
-		log.Println("收到同步请求...")
+		log.Println("收到同步用户请求...")
 		go func() {
 			cmd.SyncUsers(done)
 			sendMessage(conn, "同步任务已启动!")
 		}()
 
 	case "check":
-		log.Println("收到检查请求...")
+		log.Println("收到检查工作区请求...")
 		if err := cmd.CheckWorkspaceLimit(conn); err != nil {
 			sendError(conn, "检查失败: "+err.Error())
 		}
 
-	case "get":
-		log.Println("收到获取请求...")
+	case "get-users":
+		log.Println("收到获取已创建工作区用户请求...")
 		cmd.GetCreatedWorkspacesUsers(conn)
 
+	case "get-workspace":
+		log.Println("收到获取工作区数据请求...")
+		var req cmd.GetWorkspaceRequest
+		if err := json.Unmarshal(request.Data, &req); err != nil {
+			sendError(conn, "请求格式错误")
+			return
+		}
+
+		wp, err := cmd.GetWorkspacePermission(req.UserID)
+		if err != nil {
+			sendError(conn, "获取工作区权限失败: "+err.Error())
+			return
+		}
+
+		wpJSON, err := json.Marshal(wp)
+		if err != nil {
+			sendError(conn, "编码工作区权限数据时出错")
+			return
+		}
+
+		conn.WriteMessage(websocket.TextMessage, wpJSON)
+
 	case "set":
-		log.Println("收到设置权限请求...")
+		log.Println("收到设置授权请求...")
 		var req SetPermissionRequest
 		if err := json.Unmarshal(request.Data, &req); err != nil {
 			log.Println("解析权限设置请求时出错:", err)
@@ -140,36 +162,43 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 
 		sendMessage(conn, res)
 
-	case "back":
-		log.Println("收到返回消息请求...")
+	case "insert-message":
+		log.Println("收到记录消息请求...")
 		var req cmd.BackRequest
 		if err := json.Unmarshal(request.Data, &req); err != nil {
-			sendError(conn, "返回消息请求格式错误")
+			sendError(conn, "记录消息请求格式错误")
 			return
 		}
 
 		if err := cmd.InsertChatMessage(req); err != nil {
-			sendError(conn, "插入聊天消息失败: "+err.Error())
+			sendError(conn, "记录聊天消息失败: "+err.Error())
 			return
 		}
 
 		sendMessage(conn, "消息已成功记录!")
 
-	case "send":
-		log.Println("收到发送消息请求...")
-		var sessionID int64
-		if err := json.Unmarshal(request.Data, &sessionID); err != nil {
-			sendError(conn, "发送消息请求格式错误")
+	case "get-history":
+		log.Println("收到获取历史记录请求...")
+		var req cmd.GetHistoryRequest
+		if err := json.Unmarshal(request.Data, &req); err != nil {
+			sendError(conn, "获取请求格式错误")
 			return
 		}
 
-		lastMessage, err := cmd.SendChatMessages(sessionID)
+		history, err := cmd.GetChatHistory(req.UserID)
 		if err != nil {
-			sendError(conn, "获取聊天消息失败: "+err.Error())
+			sendError(conn, "获取聊天历史失败: "+err.Error())
 			return
 		}
 
-		sendMessage(conn, lastMessage)
+		response := cmd.GetHistoryResponse{Messages: history}
+		responseData, err := json.Marshal(response)
+		if err != nil {
+			sendError(conn, "序列化响应时出错: "+err.Error())
+			return
+		}
+
+		conn.WriteMessage(websocket.TextMessage, responseData)
 
 	default:
 		log.Println("未知请求:", request.Action)

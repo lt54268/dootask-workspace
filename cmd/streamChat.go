@@ -16,11 +16,11 @@ const streamChatAPI = "http://103.63.139.165:3001/api/v1/workspace/%s/stream-cha
 type RequestPayload struct {
 	Message   string `json:"message"`
 	Mode      string `json:"mode"`
-	SessionID string `json:"sessionId"`
+	SessionID int64  `json:"sessionId"`
 }
 
 // 处理流式聊天请求
-func StreamChat(slug, message, mode, sessionID string) (string, error) {
+func StreamChat(slug, message string, mode string, sessionID int64) (string, error) {
 	payload := RequestPayload{
 		Message:   message,
 		Mode:      mode,
