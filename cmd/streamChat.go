@@ -28,14 +28,14 @@ func StreamChat(slug, message string, mode string, sessionID int64) (string, err
 	}
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal payload: %v", err)
+		return "", fmt.Errorf("调用有效载荷失败: %v", err)
 	}
 
 	url := fmt.Sprintf(streamChatAPI, slug)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %v", err)
+		return "", fmt.Errorf("创建请求失败: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -47,14 +47,14 @@ func StreamChat(slug, message string, mode string, sessionID int64) (string, err
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to send request: %v", err)
+		return "", fmt.Errorf("请求发送失败: %v", err)
 	}
 	defer resp.Body.Close()
 
 	var responseData bytes.Buffer
 	_, err = io.Copy(&responseData, resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read response: %v", err)
+		return "", fmt.Errorf("读取响应失败: %v", err)
 	}
 
 	return responseData.String(), nil
@@ -72,7 +72,7 @@ func GetWorkspaceSlug(workspaceID string) (string, error) {
 	query := "SELECT slug FROM workspace_permission WHERE workspace_id = ?"
 	err = dbConn.QueryRow(query, workspaceID).Scan(&slug)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve slug: %v", err)
+		return "", fmt.Errorf("未能检索到slug: %v", err)
 	}
 	return slug, nil
 }

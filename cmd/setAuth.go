@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"doows/common"
 	"doows/db"
 	"doows/sync"
 	"log"
@@ -13,7 +14,7 @@ func SetWorkspacePermission(conn *websocket.Conn, userID int64, isCreate bool) {
 	db, err := db.ConnectDB()
 	if err != nil {
 		log.Fatal("数据库连接失败:", err)
-		conn.WriteMessage(websocket.TextMessage, []byte("数据库连接失败!"))
+		common.SendJSONResponse(conn, "error", "数据库连接失败!")
 		return
 	}
 	defer db.Close()
@@ -25,21 +26,21 @@ func SetWorkspacePermission(conn *websocket.Conn, userID int64, isCreate bool) {
 		err = setService.CheckWorkspaceCreationLimit()
 		if err != nil {
 			log.Println("工作区创建检查时出错:", err)
-			conn.WriteMessage(websocket.TextMessage, []byte("工作区创建检查时出错!"))
+			common.SendJSONResponse(conn, "error", "工作区创建检查时出错!")
 			return
 		}
 
 		if err != nil && err.Error() == "工作区创建数量已达最大!" {
-			conn.WriteMessage(websocket.TextMessage, []byte("创建工作区数量已达最大!"))
+			common.SendJSONResponse(conn, "error", "创建工作区数量已达最大!")
 			return
 		}
 	}
 
 	if err := setService.SetWorkspacePermission(userID, isCreate); err != nil {
 		log.Println("设置工作区权限失败:", err)
-		conn.WriteMessage(websocket.TextMessage, []byte("设置工作区权限失败: "+err.Error()))
+		common.SendJSONResponse(conn, "error", "设置工作区权限失败!"+err.Error())
 		return
 	}
 
-	conn.WriteMessage(websocket.TextMessage, []byte("工作区权限设置成功!"))
+	common.SendJSONResponse(conn, "success", "工作区权限设置成功!")
 }

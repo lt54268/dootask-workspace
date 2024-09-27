@@ -102,7 +102,7 @@ func (s *SyncService) CheckWorkspaceCreationLimit() error {
 	}
 
 	// 检查数量是否超过 3
-	if count >= 3 {
+	if count > 3 {
 		log.Printf("Warning: 超过工作区创建的数量，当前数量: %d", count)
 		return errors.New("工作区创建数量已达最大!")
 	}
@@ -111,11 +111,11 @@ func (s *SyncService) CheckWorkspaceCreationLimit() error {
 	return nil
 }
 
-// 查询 is_create = true 的所有用户
+// 查询 workspace_id 不为空的所有用户
 func (s *SyncService) GetCreatedWorkspaces() ([]int64, error) {
 	var userIds []int64
 
-	rows, err := s.db.Query("SELECT user_id FROM workspace_permission WHERE is_create = 1")
+	rows, err := s.db.Query("SELECT user_id FROM workspace_permission WHERE workspace_id IS NOT NULL")
 	if err != nil {
 		return nil, err
 	}

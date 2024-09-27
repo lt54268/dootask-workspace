@@ -1,6 +1,7 @@
 # dootask-workspace
 ## 接口使用说明
 请求地址：ws://服务器IP:3333/ws
+更改端口：export SERVER_PORT=6666
 ### 一、同步用户ID
  ```
 {

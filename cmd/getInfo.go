@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"database/sql"
+	"doows/common"
 	"doows/db"
 	"doows/sync"
 	"fmt"
@@ -42,7 +43,7 @@ func GetCreatedWorkspacesUsers(conn *websocket.Conn) {
 
 	if err != nil {
 		log.Println("获取工作区用户失败:", err)
-		conn.WriteMessage(websocket.TextMessage, []byte("获取工作区用户失败!"))
+		common.SendJSONResponse(conn, "error", "获取工作区用户失败!")
 		return
 	}
 
@@ -53,11 +54,11 @@ func GetCreatedWorkspacesUsers(conn *websocket.Conn) {
 
 	if err := conn.WriteJSON(userResponses); err != nil {
 		log.Println("发送用户列表失败:", err)
-		conn.WriteMessage(websocket.TextMessage, []byte("发送用户列表失败!"))
+		common.SendJSONResponse(conn, "error", "发送用户列表失败!")
 		return
 	}
 
-	conn.WriteMessage(websocket.TextMessage, []byte("获取已创建工作区用户列表完毕!"))
+	//common.SendJSONResponse(conn, "success", "获取已创建工作区用户列表完毕!")
 }
 
 // 根据 user_id 获取 workspace_permission 表中的所有字段
@@ -83,7 +84,6 @@ func GetWorkspacePermission(userID int64) (*WorkspacePermission, error) {
 		return nil, fmt.Errorf("查询数据库时出错: %w", err)
 	}
 
-	// 将 []byte 类型的时间字段转换为 time.Time 类型
 	wp.CreateTime, err = parseTime(createTime)
 	if err != nil {
 		return nil, fmt.Errorf("解析创建时间时出错: %w", err)
@@ -93,7 +93,6 @@ func GetWorkspacePermission(userID int64) (*WorkspacePermission, error) {
 		return nil, fmt.Errorf("解析更新时间时出错: %w", err)
 	}
 
-	// 如果 workspace_id 不为 NULL，则赋值给结构体
 	if workspaceID.Valid {
 		wp.WorkspaceID = workspaceID.String
 	}

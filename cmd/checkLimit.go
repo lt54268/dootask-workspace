@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"doows/common"
 	"doows/db"
 	"doows/sync"
 	"log"
@@ -24,6 +25,6 @@ func CheckWorkspaceLimit(conn *websocket.Conn) error {
 	}
 
 	log.Println("工作区创建限制检查完毕!")
-	conn.WriteMessage(websocket.TextMessage, []byte("工作区创建限制检查完毕!"))
+	common.SendJSONResponse(conn, "success", "工作区创建限制检查完毕!")
 	return nil
 }
