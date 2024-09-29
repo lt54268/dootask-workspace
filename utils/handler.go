@@ -37,6 +37,10 @@ type NormalChatRequest struct {
 	SessionID int64  `json:"sessionId"`
 }
 
+type DeleteWorkspaceRequest struct {
+	UserID int64 `json:"user_id"`
+}
+
 func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 	var request WebSocketRequest
 	if err := json.Unmarshal(msg, &request); err != nil {
@@ -198,6 +202,21 @@ func HandleMessage(conn *websocket.Conn, msg []byte, done chan struct{}) {
 		}
 
 		conn.WriteMessage(websocket.TextMessage, responseData)
+
+	case "delete-ws":
+		log.Println("收到删除工作区请求...")
+		var req DeleteWorkspaceRequest
+		if err := json.Unmarshal(request.Data, &req); err != nil {
+			common.SendJSONResponse(conn, "error", "删除请求格式错误!")
+			return
+		}
+
+		if err := cmd.DeleteWorkspace(req.UserID); err != nil {
+			common.SendJSONResponse(conn, "error", "删除工作区失败: "+err.Error())
+			return
+		}
+
+		common.SendJSONResponse(conn, "success", "工作区删除成功!")
 
 	default:
 		log.Println("未知请求:", request.Action)

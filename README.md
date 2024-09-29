@@ -27,19 +27,28 @@
   }
 }
  ```
-### 四、检查已创建的工作区数量
+ ### 四、删除工作区
+ ```
+ {
+  "action": "delete-ws",
+  "data": {
+    "user_id": 1       // 用户ID
+  }
+}
+ ```
+### 五、检查已创建的工作区数量
  ```
 {
   "action": "check"
 }
  ```
-### 五、获取已创建工作区的用户ID
+### 六、获取已创建工作区的用户ID
  ```
 {
   "action": "get-users"
 }
  ```
-### 六、获取workspace_permission表中某个用户的所有字段
+### 七、获取workspace_permission表中某个用户的所有字段
  ```
 {
   "action": "get-workspace",
@@ -48,7 +57,7 @@
   }
 }
  ```
-### 七、流式对话问答
+### 八、流式对话问答
  ```
 {
   "action": "stream-chat",
@@ -60,7 +69,7 @@
   }
 }
  ```
-### 八、常规对话问答
+### 九、常规对话问答
  ```
 {
   "action": "chat",
@@ -72,7 +81,7 @@
   }
 }
  ```
-### 九、存储最后一条聊天对话
+### 十、存储最后一条聊天对话
  ```
 {
   "action": "insert-message",
@@ -83,7 +92,7 @@
   }
 }
 ```
-### 十、获取history_aichat表中某个用户的所有字段
+### 十一、获取history_aichat表中某个用户的所有字段
 ```
 {
   "action": "get-history",
