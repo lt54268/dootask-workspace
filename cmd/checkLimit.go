@@ -24,7 +24,7 @@ func CheckWorkspaceLimit(conn *websocket.Conn) error {
 		return err
 	}
 
-	log.Println("工作区创建限制检查完毕!")
+	//log.Println("工作区创建限制检查完毕!")
 	common.SendJSONResponse(conn, "success", "工作区创建限制检查完毕!")
 	return nil
 }

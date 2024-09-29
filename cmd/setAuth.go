@@ -21,7 +21,7 @@ func SetWorkspacePermission(conn *websocket.Conn, userID int64, isCreate bool) {
 
 	setService := sync.NewSyncService(db)
 
-	// 只有在设置为 true 时检查当前 is_create = true 的用户数量是否超过限定值
+	// 只有在设置为 true 时检查当前的工作区数量是否超过限定值
 	if isCreate {
 		err = setService.CheckWorkspaceCreationLimit()
 		if err != nil {

@@ -71,7 +71,7 @@ func GetWorkspacePermission(userID int64) (*WorkspacePermission, error) {
 
 	var wp WorkspacePermission
 	var workspaceID sql.NullString
-	var createTime, updateTime []byte // 用于临时存储数据库中的时间字段
+	var createTime, updateTime []byte
 	query := `SELECT id, user_id, is_create, workspace_id, create_time, update_time 
               FROM workspace_permission WHERE user_id = ?`
 	err = db.QueryRow(query, userID).Scan(
@@ -100,7 +100,6 @@ func GetWorkspacePermission(userID int64) (*WorkspacePermission, error) {
 	return &wp, nil
 }
 
-// 将 []byte 转换为 time.Time
 func parseTime(timeBytes []byte) (time.Time, error) {
 	layout := "2006-01-02 15:04:05"
 	return time.Parse(layout, string(timeBytes))

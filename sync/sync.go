@@ -91,23 +91,23 @@ func generatePlaceholders(count int) string {
 	return strings.Join(placeholders, ", ")
 }
 
-// 检查 is_create = true 的用户数量是否超过 3
+// 检查创建工作区数量是否超过 3
 func (s *SyncService) CheckWorkspaceCreationLimit() error {
-	log.Println("开始检查已获授权创建工作区的用户数量...")
+	//log.Println("开始检查已创建工作区的数量...")
 
 	var count int
-	err := s.db.QueryRow("SELECT COUNT(*) FROM workspace_permission WHERE is_create = 1").Scan(&count)
+	err := s.db.QueryRow("SELECT COUNT(*) FROM workspace_permission WHERE workspace_id IS NOT NULL").Scan(&count)
 	if err != nil {
 		return err
 	}
 
 	// 检查数量是否超过 3
-	if count > 3 {
+	if count >= 3 {
 		log.Printf("Warning: 超过工作区创建的数量，当前数量: %d", count)
 		return errors.New("工作区创建数量已达最大!")
 	}
 
-	log.Printf("当前已获授权的用户数量: %d", count)
+	log.Printf("当前已创建工作区数量: %d", count)
 	return nil
 }
 
